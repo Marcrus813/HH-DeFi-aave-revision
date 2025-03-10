@@ -3,6 +3,7 @@ require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-gas-reporter");
 
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || "http://localhost:8545";
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "http://localhost:8545";
 const SEPOLIA_PRIV_KEY = process.env.SEPOLIA_PRIV_KEY || "0x";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "YOUR_ETHERSCAN_API_KEY";
@@ -11,9 +12,15 @@ const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "YOUR_COINMAR
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
     solidity: {
-        compilers: [{ version: "0.8.0" }, { version: "0.8.27" }],
+        compilers: [{ version: "0.8.10" }, { version: "0.8.27" }, {version: "0.7.5"}],
     },
     networks: {
+        hardhat:{
+            chainId: 31337,
+            forking: {
+                url: MAINNET_RPC_URL
+            }
+        },
         localhost: {
             ignition: {
                 blockPollingInterval: 1_000,
