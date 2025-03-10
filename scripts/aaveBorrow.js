@@ -13,10 +13,7 @@ async function aaveBorrow() {
         paramConfig.aave.mainnet.lendingPoolProviderAddress,
         deployer,
     );
-    const marketId = await poolAddressesProvider.getMarketId();
-    const poolAddress = await poolAddressesProvider
-        .connect(deployer)
-        ["getAddress"](marketId);
+    const poolAddress = await poolAddressesProvider.getPool();
     const pool = await getContract(
         ABI_HOME + "Pool.json",
         poolAddress,

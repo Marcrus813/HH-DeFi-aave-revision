@@ -41,6 +41,7 @@
                             ```
                         - `getAddress`
                             - There's a function `getAddress`, but it overlaps with `ethers: contract.getAddress`
+                                - There are other ways to call contract: `contract.callStatic`, `contract["functionName"]()`
 - [Forking](https://hardhat.org/hardhat-network/docs/guides/forking-other-networks)
     - `npx hardhat node --fork https://eth-mainnet.g.alchemy.com/v2/<key>`
         - With forking, we can use mainnet token address, this is another way to do tests besides mocking on localhost, forking does not copy the entire chain, when we need to interact with a specific address / contract, it makes an API call to get the info
