@@ -13,7 +13,12 @@ async function aaveBorrow() {
     console.log(`Pool address: ${poolAddress}`);
 
     // Approve the pool to spend WETH
-    await approveErc20(poolAddress, SUPPLY_AMOUNT, deployer);
+    await approveErc20(
+        poolAddress,
+        paramConfig.wEthParam.mainnet.wEthAddress,
+        SUPPLY_AMOUNT,
+        deployer,
+    );
 
     // Supply(Deposit)
     await supplyWeth(pool, deployer);
@@ -36,15 +41,23 @@ async function aaveBorrow() {
     const daiAmount = Number(limitedBorrowAmountWei) / Number(daiWeiPrice);
     console.log(`Borrowing DAI: ${daiAmount}`);
     const daiAmountWei = ethers.parseEther(daiAmount.toString());
-}
 
-async function getWethContract(account) {
-    const wethContract = await getContractFromLocalAbi(
-        paramConfig.wEthParam.mainnet.wEthAddress,
-        ABI_HOME + "WETH.json",
-        account,
+    await borrowDai(
+        paramConfig.aave.mainnet.daiAddress,
+        pool,
+        daiAmountWei,
+        deployer,
     );
-    return wethContract;
+
+    await getUserData(pool, deployer);
+
+    await repayDai(
+        paramConfig.aave.mainnet.daiAddress,
+        pool,
+        daiAmountWei,
+        deployer,
+    );
+    await getUserData(pool, deployer);
 }
 
 async function getLendingPool(account) {
@@ -68,9 +81,10 @@ async function getLendingPool(account) {
     return pool;
 }
 
-async function approveErc20(spender, amount, account) {
-    const weth = await getWethContract(account);
-    const approveTxn = await weth.approve(spender, amount);
+async function approveErc20(spender, tokenAddress, amount, account) {
+    const token = await ethers.getContractAt("IERC20", tokenAddress, account);
+    const approveTxn = await token.approve(spender, amount);
+
     await approveTxn.wait(1);
     console.log(`Approved spender: ${spender}`);
 }
@@ -123,7 +137,7 @@ async function getUserData(pool, account) {
 }
 
 /**
- *
+ * Get price from price feed based on key pair
  * @param {string} pair "DAI/ETH", "ETH/USD"
  * @returns {BigInt} Answer
  */
@@ -142,7 +156,35 @@ async function getPrice(pair) {
     return answer;
 }
 
-async function borrowDai() {}
+async function borrowDai(daiAddress, pool, amountWei, account) {
+    const borrowTxn = await pool.borrow(
+        daiAddress,
+        amountWei,
+        2, // Should always be passed a value of 2
+        0, // referral code
+        account.address,
+    );
+    await borrowTxn.wait(1);
+    console.log(`Borrowed DAI: ${ethers.formatEther(amountWei)}`);
+}
+
+async function repayDai(daiAddress, pool, amountWei, account) {
+    // Approve the pool to spend DAI
+    const poolAddress = await pool.getAddress();
+    await approveErc20(
+        poolAddress,
+        paramConfig.aave.mainnet.daiAddress,
+        amountWei,
+        account,
+    );
+    const repayTxn = await pool.repay(
+        daiAddress,
+        amountWei,
+        2,
+        account.address,
+    );
+    await repayTxn.wait(1);
+}
 
 async function main() {
     await aaveBorrow();

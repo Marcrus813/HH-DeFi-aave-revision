@@ -15,6 +15,7 @@ const paramConfig = {
                 "0x773616E4d11A78F511299002da57A0a94577F1f4",
             ethUsdPriceFeedAddress:
                 "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+            daiAddress: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
         },
     },
 };

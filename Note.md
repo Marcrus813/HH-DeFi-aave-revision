@@ -143,3 +143,11 @@
                         - Currently working with DAI, we can just use the amount in ETH, since 1 DAI = 1 USD, but for learning purpose I am doing transformation
 
         - Repay
+            - Need to allow pool contract to spend our DAI balance so it could take back
+            - Even with repaying all, we still have DAI left
+                - After borrowing, we accrued interest, to repay this part we need to use uniswap then repay, also can be done through code
+### Visualization
+- aToken
+    - Supply -> Get back `aToken` / `interest bearing token`, these keep track of how much collateral we supplied to aave, to withdraw back, need to burn `aToken`s
+### Practice
+- [SpeedRunETH](https://speedrunethereum.com)
