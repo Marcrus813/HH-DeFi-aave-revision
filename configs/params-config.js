@@ -9,7 +9,12 @@ const paramConfig = {
     },
     aave: {
         mainnet: {
-            lendingPoolProviderAddress: "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e",
+            lendingPoolProviderAddress:
+                "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e",
+            daiEthPriceFeedAddress:
+                "0x773616E4d11A78F511299002da57A0a94577F1f4",
+            ethUsdPriceFeedAddress:
+                "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
         },
     },
 };

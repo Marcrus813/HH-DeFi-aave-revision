@@ -1,5 +1,6 @@
 {
     "devDependencies": {
+        "@aave/core-v3": "^1.19.3",
         "@chainlink/local": "^0.2.3",
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
         "@nomicfoundation/hardhat-ethers": "^3.0.0",

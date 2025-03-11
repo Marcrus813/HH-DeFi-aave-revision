@@ -27,6 +27,7 @@
         - How about we just use src on ether scan and compile to get the ABI? Better yet how about we just copy the ABI from etherscan?
             - ~~Just copy the src of the contract and run `yarn hardhat compile`, pass in the contract file name we gave it then we are good~~
                 - Some files may include imports, to successfully compile we also need the imported file, I think we should just copy the ABI from scanner
+                    - Another way to resolve this: `yarn add --dev @aave/core-v3`, and copy out interfaces inside
                     - **NOTE**
                         - Difference from web ethers: In web i used `fetch` which is a network based function, in Node environment, just use:
                             ```javascript
@@ -49,6 +50,96 @@
             - Quick, easy, simulating the mainnet
             - Need API, some contracts are complicated to work with
 - Interacting with aave
+
     - ABI, address
         - Lending pool
             - Aave contract for us to get target address
+    - Actual interactions
+
+        - **NOTE**
+
+            - Proxy
+                - [Guide](https://medium.com/@social_42205/proxy-contracts-in-solidity-f6f5ffe999bd)
+                    - Definition
+                        > The proxy contract acts as an intermediary that delegates calls to an implementation contract where the actual logic resides.
+                        > This way the proxy contract stays immutable, but you can deploy a new contract behind the proxy contract — simply change the target address inside the proxy contract.
+                        > _Key Feature_: Preserves the state, allowing for upgrades without data loss.
+                    - Need to identify a proxy contract, in this case, it does not contain the function we are looking for, hence probably a proxy contract, more examples to be found
+                    - Interaction
+                        - Ethers.js -> Use proxy's address(since this is the point of proxies, upgrading the logic contract will not affect this address) -> Use the logic contract's ABI
+
+        - Supply(`deposit` is deprecated)
+
+            - `Pool` has an action:
+
+                ```solidity
+                SupplyLogic.executeSupply(
+                    _reserves,
+                    _reservesList,
+                    _usersConfig[onBehalfOf],
+                    DataTypes.ExecuteSupplyParams({
+                        asset: asset,
+                        amount: amount,
+                        onBehalfOf: onBehalfOf,
+                        referralCode: referralCode
+                    })
+                );
+
+                function executeSupply(
+                    mapping(address => DataTypes.ReserveData) storage reservesData,
+                    mapping(uint256 => address) storage reservesList,
+                    DataTypes.UserConfigurationMap storage userConfig,
+                    DataTypes.ExecuteSupplyParams memory params
+                ) external {
+                    DataTypes.ReserveData storage reserve = reservesData[params.asset];
+                    DataTypes.ReserveCache memory reserveCache = reserve.cache();
+
+                    reserve.updateState(reserveCache);
+
+                    ValidationLogic.validateSupply(reserveCache, reserve, params.amount);
+
+                    reserve.updateInterestRates(reserveCache, params.asset, params.amount, 0);
+
+                    IERC20(params.asset).safeTransferFrom(msg.sender, reserveCache.aTokenAddress, params.amount); // Using ERC-20 transfer from
+
+                    bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
+                    msg.sender,
+                    params.onBehalfOf,
+                    params.amount,
+                    reserveCache.nextLiquidityIndex
+                    );
+
+                    if (isFirstSupply) {
+                    if (
+                        ValidationLogic.validateAutomaticUseAsCollateral(
+                        reservesData,
+                        reservesList,
+                        userConfig,
+                        reserveCache.reserveConfiguration,
+                        reserveCache.aTokenAddress
+                        )
+                    ) {
+                        userConfig.setUsingAsCollateral(reserve.id, true);
+                        emit ReserveUsedAsCollateralEnabled(params.asset, params.onBehalfOf);
+                    }
+                    }
+
+                    emit Supply(params.asset, msg.sender, params.onBehalfOf, params.amount, params.referralCode);
+                }
+                ```
+
+                So we need to approve in allowance first
+
+                - Referral code?
+                    - Referral supply is currently inactive, you can pass 0 as referralCode. This program may be activated in the future through an Aave governance proposal.
+
+        - Borrow
+
+            - Basic info: our debt, how much we can borrow
+                - `pool: getUserAccountData`
+                    - Total collateral, total debt, available borrow, current liquidation threshold, ltv(loan to value)?, health factor
+                    - [Liquidations](https://aave.com/docs/concepts/liquidations)
+                    - The value is not ETH or wei, it is "The total collateral of the user in the base currency used by the price feed" according to doc, which is USD
+                        - Currently working with DAI, we can just use the amount in ETH, since 1 DAI = 1 USD, but for learning purpose I am doing transformation
+
+        - Repay
